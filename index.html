@@ -2,7 +2,9 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calculateur Calcium Repas</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
@@ -11,6 +13,12 @@
     input[type=number] { width: 60px; }
     .total { font-weight: bold; background-color: #e0ffe0; }
     .totaux-journaliers { font-size: 1.1em; margin: 10px 0; font-weight: bold; }
+    
+    /* Responsive styles */
+    @media (max-width: 768px) {
+      table { display: block; overflow-x: auto; }
+      input[type=number] { width: 40px; }
+    }
   </style>
 </head>
 <body>
@@ -44,8 +52,50 @@
   </table>
 
   <div class="totaux-journaliers">Total journalier estimé : <span id="total-daily-bottom">0</span> mg</div>
-  <button onclick="saveData()">💾 Sauvegarder mes quantités</button>
+  
+  <div style="margin: 20px 0; display: flex; gap: 10px;">
+    <button onclick="saveData()" style="padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">💾 Sauvegarder mes quantités</button>
+    <button onclick="exportData()" style="padding: 10px; background-color: #008CBA; color: white; border: none; border-radius: 4px; cursor: pointer;">📤 Exporter mes données</button>
+  </div>
 
+  <script>
+    // Function to export data as CSV
+    function exportData() {
+      // Create CSV header
+      let csv = 'Aliment,Portion,Calcium par portion,Petit-déjeuner,Déjeuner,Goûter,Dîner\n';
+      
+      // Add each food item to CSV
+      foods.forEach((food, i) => {
+        let values = [
+          food.name,
+          food.portion,
+          food.calcium
+        ];
+        
+        // Add quantities for each meal
+        meals.forEach(meal => {
+          const input = document.getElementById(`${meal}-${i}`);
+          values.push(input.value || '0');
+        });
+        
+        // Add line to CSV
+        csv += values.join(',') + '\n';
+      });
+      
+      // Create downloadable link
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'calciplan_export.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  
+  </script>
+  
   <script>
     const foods = [
       { name: "Yaourt nature", portion: "1 pot (125 g)", calcium: 150 },
