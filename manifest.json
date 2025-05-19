@@ -1,0 +1,16 @@
+{
+  "name": "Calciplan",
+  "short_name": "Calciplan",
+  "description": "Calculateur d'apport calcique quotidien",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4CAF50",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
