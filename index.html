@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Calculateur Calcium Repas</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f0f0f0; }
+    input[type=number] { width: 60px; }
+    .total { font-weight: bold; background-color: #e0ffe0; }
+    .totaux-journaliers { font-size: 1.1em; margin: 10px 0; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Calculateur d'apport calcique quotidien</h1>
+  <p>Sélectionnez les quantités de chaque aliment consommé à chaque repas.</p>
+
+  <div class="totaux-journaliers">Total journalier estimé : <span id="total-daily">0</span> mg</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Aliment</th>
+        <th>Portion type</th>
+        <th>Calcium / portion</th>
+        <th>Petit-déj</th>
+        <th>Déjeuner</th>
+        <th>Goûter</th>
+        <th>Dîner</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+    <tfoot>
+      <tr class="total">
+        <td colspan="3">Total Calcium (mg)</td>
+        <td id="total-breakfast">0</td>
+        <td id="total-lunch">0</td>
+        <td id="total-snack">0</td>
+        <td id="total-dinner">0</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="totaux-journaliers">Total journalier estimé : <span id="total-daily-bottom">0</span> mg</div>
+  <button onclick="saveData()">💾 Sauvegarder mes quantités</button>
+
+  <script>
+    const foods = [
+      { name: "Yaourt nature", portion: "1 pot (125 g)", calcium: 150 },
+      { name: "Kiri", portion: "1 portion (20 g)", calcium: 130 },
+      { name: "Fromage blanc", portion: "100 g", calcium: 120 },
+      { name: "Amandes", portion: "15 g (petite poignée)", calcium: 100 },
+      { name: "Hepar / Contrex", portion: "250 ml", calcium: 125 },
+      { name: "Sardines sans arêtes", portion: "100 g", calcium: 40 },
+      { name: "Tofu enrichi", portion: "100 g", calcium: 250 },
+      { name: "Chou cuit", portion: "150 g", calcium: 100 },
+      { name: "Brocoli", portion: "150 g", calcium: 100 },
+      { name: "Lait", portion: "250 ml", calcium: 300 },
+      { name: "Œuf", portion: "1 œuf", calcium: 25 },
+      { name: "Graines tournesol/courge", portion: "15 g", calcium: 50 },
+      { name: "Pain complet", portion: "50 g", calcium: 20 },
+      { name: "Myrtilles", portion: "50 g", calcium: 5 },
+      { name: "Pruneaux", portion: "3 unités", calcium: 10 },
+      { name: "Oignons cuits", portion: "100 g", calcium: 10 },
+      { name: "Tomates", portion: "100 g", calcium: 15 },
+      { name: "Poisson blanc", portion: "100 g", calcium: 15 },
+      { name: "Poulet", portion: "100 g", calcium: 15 }
+    ];
+
+    const meals = ["breakfast", "lunch", "snack", "dinner"];
+
+    function updateTotals() {
+      let dailyTotal = 0;
+      meals.forEach(meal => {
+        let total = 0;
+        foods.forEach((_, i) => {
+          const input = document.getElementById(`${meal}-${i}`);
+          const val = parseFloat(input.value) || 0;
+          total += val * foods[i].calcium;
+        });
+        document.getElementById(`total-${meal}`).textContent = total;
+        dailyTotal += total;
+      });
+      document.getElementById("total-daily").textContent = dailyTotal;
+      document.getElementById("total-daily-bottom").textContent = dailyTotal;
+    }
+
+    function saveData() {
+      const data = {};
+      meals.forEach(meal => {
+        data[meal] = foods.map((_, i) => parseFloat(document.getElementById(`${meal}-${i}`).value) || 0);
+      });
+      localStorage.setItem("calciumIntake", JSON.stringify(data));
+      alert("Quantités sauvegardées dans le navigateur.");
+    }
+
+    function loadData() {
+      const data = JSON.parse(localStorage.getItem("calciumIntake"));
+      if (!data) return;
+      meals.forEach(meal => {
+        foods.forEach((_, i) => {
+          const input = document.getElementById(`${meal}-${i}`);
+          if (data[meal] && data[meal][i] != null) {
+            input.value = data[meal][i];
+          }
+        });
+      });
+      updateTotals();
+    }
+
+    const tbody = document.getElementById("table-body");
+    foods.forEach((food, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${food.name}</td>
+        <td>${food.portion}</td>
+        <td>${food.calcium} mg</td>
+        ${meals.map(meal => `<td><input type="number" id="${meal}-${i}" min="0" value="0" onchange="updateTotals()"></td>`).join("")}
+      `;
+      tbody.appendChild(tr);
+    });
+
+    window.onload = loadData;
+  </script>
+</body>
+</html>
