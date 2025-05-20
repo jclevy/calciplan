@@ -16,11 +16,28 @@
     input[type=number] { width: 60px; }
     .total { font-weight: bold; background-color: #e0ffe0; }
     .totaux-journaliers { font-size: 1.1em; margin: 10px 0; font-weight: bold; }
+    .meal-summary { 
+      background-color: #f9f9f9; 
+      font-size: 0.9em; 
+      max-height: 100px; 
+      overflow-y: auto; 
+      padding: 5px;
+      min-height: 60px;
+    }
+    .meal-summary ul {
+      margin: 0;
+      padding-left: 15px;
+      list-style-type: circle;
+    }
+    .meal-summary li {
+      margin-bottom: 3px;
+    }
     
     /* Responsive styles */
     @media (max-width: 768px) {
       table { display: block; overflow-x: auto; }
       input[type=number] { width: 40px; }
+      .meal-summary { font-size: 0.8em; }
     }
   </style>
 </head>
@@ -42,7 +59,15 @@
         <th>Dîner</th>
       </tr>
     </thead>
-    <tbody id="table-body"></tbody>
+    <tbody id="table-body">
+      <tr id="meal-summaries-row">
+        <td colspan="3"><strong>Aliments sélectionnés</strong></td>
+        <td id="breakfast-summary" class="meal-summary"><ul></ul></td>
+        <td id="lunch-summary" class="meal-summary"><ul></ul></td>
+        <td id="snack-summary" class="meal-summary"><ul></ul></td>
+        <td id="dinner-summary" class="meal-summary"><ul></ul></td>
+      </tr>
+    </tbody>
     <tfoot>
       <tr class="total">
         <td colspan="3">Total Calcium (mg)</td>
@@ -124,6 +149,34 @@
 
     const meals = ["breakfast", "lunch", "snack", "dinner"];
 
+    function updateMealSummary(meal) {
+      const summaryElement = document.getElementById(`${meal}-summary`).querySelector('ul');
+      summaryElement.innerHTML = ''; // Clear existing items
+      
+      let hasItems = false;
+      foods.forEach((food, i) => {
+        const input = document.getElementById(`${meal}-${i}`);
+        const quantity = parseFloat(input.value) || 0;
+        
+        if (quantity > 0) {
+          hasItems = true;
+          const calciumAmount = quantity * food.calcium;
+          const li = document.createElement('li');
+          li.textContent = `${quantity} × ${food.name} (${calciumAmount} mg)`;
+          summaryElement.appendChild(li);
+        }
+      });
+      
+      // Show a message if no items selected
+      if (!hasItems) {
+        const li = document.createElement('li');
+        li.textContent = 'Aucun aliment sélectionné';
+        li.style.fontStyle = 'italic';
+        li.style.color = '#777';
+        summaryElement.appendChild(li);
+      }
+    }
+    
     function updateTotals() {
       let dailyTotal = 0;
       meals.forEach(meal => {
@@ -135,6 +188,9 @@
         });
         document.getElementById(`total-${meal}`).textContent = total;
         dailyTotal += total;
+        
+        // Update the meal summary
+        updateMealSummary(meal);
       });
       document.getElementById("total-daily").textContent = dailyTotal;
       document.getElementById("total-daily-bottom").textContent = dailyTotal;
@@ -163,7 +219,10 @@
       updateTotals();
     }
 
+    // Create food rows
     const tbody = document.getElementById("table-body");
+    const mealSummaryRow = document.getElementById("meal-summaries-row");
+    
     foods.forEach((food, i) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -175,7 +234,12 @@
       tbody.appendChild(tr);
     });
 
-    window.onload = loadData;
+    // Initialize page
+    window.onload = function() {
+      loadData();
+      // Initialize meal summaries
+      meals.forEach(meal => updateMealSummary(meal));
+    };
   </script>
 </body>
 </html>
