@@ -220,20 +220,109 @@
     .meal-inputs {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 15px;
       margin-top: 15px;
     }
     
     .meal-input {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 8px;
     }
     
-    .meal-input input {
-      padding: 8px;
-      width: 100%;
-      max-width: 80px;
+    .meal-input label {
+      font-weight: bold;
+      font-size: 0.9em;
+      color: #333;
+    }
+    
+    .quantity-control {
+      display: flex;
+      align-items: center;
+      background-color: #f8f9fa;
+      border: 2px solid #dee2e6;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .qty-btn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 16px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    
+    .qty-btn:hover {
+      background-color: #0056b3;
+    }
+    
+    .qty-btn:active {
+      transform: scale(0.95);
+      background-color: #004085;
+    }
+    
+    .qty-btn.minus {
+      background-color: #dc3545;
+    }
+    
+    .qty-btn.minus:hover {
+      background-color: #c82333;
+    }
+    
+    .qty-btn.minus:active {
+      background-color: #bd2130;
+    }
+    
+    .qty-btn.plus {
+      background-color: #28a745;
+    }
+    
+    .qty-btn.plus:hover {
+      background-color: #218838;
+    }
+    
+    .qty-btn.plus:active {
+      background-color: #1e7e34;
+    }
+    
+    .qty-btn:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    
+    .qty-btn:disabled:active {
+      transform: none;
+    }
+    
+    .quantity-control input {
+      border: none;
+      background: white;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      padding: 12px 8px;
+      flex: 1;
+      min-width: 0;
+      color: #333;
+    }
+    
+    .quantity-control input:focus {
+      outline: none;
+      background-color: #fff3cd;
     }
     
     .mobile-totals {
@@ -373,19 +462,35 @@
       <div class="meal-inputs">
         <div class="meal-input">
           <label for="mobile-breakfast">Petit-déjeuner:</label>
-          <input type="number" id="mobile-breakfast" min="0" value="0">
+          <div class="quantity-control">
+            <button type="button" class="qty-btn minus" onclick="adjustQuantity('mobile-breakfast', -1)">−</button>
+            <input type="number" id="mobile-breakfast" min="0" value="0" readonly>
+            <button type="button" class="qty-btn plus" onclick="adjustQuantity('mobile-breakfast', 1)">+</button>
+          </div>
         </div>
         <div class="meal-input">
           <label for="mobile-lunch">Déjeuner:</label>
-          <input type="number" id="mobile-lunch" min="0" value="0">
+          <div class="quantity-control">
+            <button type="button" class="qty-btn minus" onclick="adjustQuantity('mobile-lunch', -1)">−</button>
+            <input type="number" id="mobile-lunch" min="0" value="0" readonly>
+            <button type="button" class="qty-btn plus" onclick="adjustQuantity('mobile-lunch', 1)">+</button>
+          </div>
         </div>
         <div class="meal-input">
           <label for="mobile-snack">Goûter:</label>
-          <input type="number" id="mobile-snack" min="0" value="0">
+          <div class="quantity-control">
+            <button type="button" class="qty-btn minus" onclick="adjustQuantity('mobile-snack', -1)">−</button>
+            <input type="number" id="mobile-snack" min="0" value="0" readonly>
+            <button type="button" class="qty-btn plus" onclick="adjustQuantity('mobile-snack', 1)">+</button>
+          </div>
         </div>
         <div class="meal-input">
           <label for="mobile-dinner">Dîner:</label>
-          <input type="number" id="mobile-dinner" min="0" value="0">
+          <div class="quantity-control">
+            <button type="button" class="qty-btn minus" onclick="adjustQuantity('mobile-dinner', -1)">−</button>
+            <input type="number" id="mobile-dinner" min="0" value="0" readonly>
+            <button type="button" class="qty-btn plus" onclick="adjustQuantity('mobile-dinner', 1)">+</button>
+          </div>
         </div>
       </div>
     </div>
@@ -703,6 +808,9 @@
       if (navInfo) {
         navInfo.textContent = `${currentFoodIndex + 1} / ${foods.length}`;
       }
+      
+      // Update quantity button states
+      updateAllQuantityButtonStates();
     }
     
     function syncMobileToDesktop() {
@@ -725,6 +833,55 @@
       if (currentFoodIndex >= foods.length) currentFoodIndex = 0;
       
       updateMobileView();
+    }
+    
+    // Function to adjust quantity with + and - buttons
+    function adjustQuantity(inputId, change) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      
+      let currentValue = parseFloat(input.value) || 0;
+      let newValue = currentValue + change;
+      
+      // Prevent negative values
+      if (newValue < 0) {
+        newValue = 0;
+      }
+      
+      // Update the input
+      input.value = newValue;
+      
+      // Sync to desktop and update totals
+      syncMobileToDesktop();
+      
+      // Update button states
+      updateQuantityButtonStates(inputId, newValue);
+    }
+    
+    // Function to update button states (disable minus button when value is 0)
+    function updateQuantityButtonStates(inputId, value) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      
+      const container = input.closest('.quantity-control');
+      if (!container) return;
+      
+      const minusBtn = container.querySelector('.qty-btn.minus');
+      if (minusBtn) {
+        minusBtn.disabled = value <= 0;
+      }
+    }
+    
+    // Function to update all quantity button states
+    function updateAllQuantityButtonStates() {
+      meals.forEach(meal => {
+        const inputId = `mobile-${meal}`;
+        const input = document.getElementById(inputId);
+        if (input) {
+          const value = parseFloat(input.value) || 0;
+          updateQuantityButtonStates(inputId, value);
+        }
+      });
     }
 
     // Create food rows for desktop table
@@ -751,13 +908,8 @@
       if (prevButton) prevButton.addEventListener('click', () => navigateFood(-1));
       if (nextButton) nextButton.addEventListener('click', () => navigateFood(1));
       
-      // Setup mobile input event listeners
-      meals.forEach(meal => {
-        const mobileInput = document.getElementById(`mobile-${meal}`);
-        if (mobileInput) {
-          mobileInput.addEventListener('input', syncMobileToDesktop);
-        }
-      });
+      // Initialize mobile quantity button states
+      updateAllQuantityButtonStates();
       
       loadData();
       updateMobileView();
