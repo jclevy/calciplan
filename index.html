@@ -3,19 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Calculateur d'apport calcique quotidien pour suivre sa consommation de calcium par repas">
+  <meta name="description" content="Calculateur d'apport en calcium et vitamine D pour suivre sa consommation quotidienne par repas">
   <meta name="theme-color" content="#4CAF50">
-  <title>Calculateur Calcium Repas</title>
+  <title>Calculateur Calcium & Vitamine D</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link rel="manifest" href="manifest.json">
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
+    
+    /* Table styles */
     table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     th { background-color: #f0f0f0; }
     input[type=number] { width: 60px; }
-    .total { font-weight: bold; background-color: #e0ffe0; }
-    .totaux-journaliers { font-size: 1.1em; margin: 10px 0; font-weight: bold; }
+    .total { font-weight: bold; }
+    .total:nth-child(odd) { background-color: #e0ffe0; }
+    .vitamin-d-total { background-color: #fff0e0; }
+    .totaux-journaliers { 
+      font-size: 1.1em; 
+      margin: 15px 0; 
+      font-weight: bold;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    
+    /* Meal summary styles */
     .meal-summary { 
       background-color: #f9f9f9; 
       font-size: 0.9em; 
@@ -33,26 +46,125 @@
       margin-bottom: 3px;
     }
     
+    /* Mobile view styles */
+    #mobile-view {
+      display: none;
+    }
+    
+    #food-navigation {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    #food-navigation button {
+      padding: 8px 12px;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .food-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      background-color: #f9f9f9;
+    }
+    
+    .food-card h3 {
+      margin-top: 0;
+      margin-bottom: 5px;
+    }
+    
+    .nutrients {
+      display: flex;
+      margin: 15px 0;
+      gap: 20px;
+    }
+    
+    .nutrient {
+      background-color: #fff;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    
+    .label {
+      font-weight: bold;
+      margin-right: 5px;
+    }
+    
+    .meal-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .meal-input {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    
+    .meal-input input {
+      padding: 8px;
+      width: 100%;
+      max-width: 80px;
+    }
+    
+    .mobile-totals {
+      margin-top: 25px;
+    }
+    
+    .mobile-meal-totals {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .mobile-meal-totals > div {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      background-color: #f5f5f5;
+    }
+    
+    .mobile-meal-totals h4 {
+      margin-top: 0;
+      margin-bottom: 5px;
+    }
+    
     /* Responsive styles */
     @media (max-width: 768px) {
-      table { display: block; overflow-x: auto; }
-      input[type=number] { width: 40px; }
+      #desktop-table { display: none; }
+      #mobile-view { display: block; }
+      input[type=number] { width: 100%; }
       .meal-summary { font-size: 0.8em; }
+      body { padding: 10px; }
+      h1 { font-size: 1.5em; }
     }
   </style>
 </head>
 <body>
-  <h1>Calculateur d'apport calcique quotidien</h1>
+  <h1>Calculateur d'apport en calcium et vitamine D</h1>
   <p>Sélectionnez les quantités de chaque aliment consommé à chaque repas.</p>
 
-  <div class="totaux-journaliers">Total journalier estimé : <span id="total-daily">0</span> mg</div>
+  <div class="totaux-journaliers">
+    <div>Total Calcium journalier estimé : <span id="total-daily-calcium">0</span> mg</div>
+    <div>Total Vitamine D journalier estimé : <span id="total-daily-vitaminD">0</span> µg</div>
+  </div>
 
-  <table>
+  <table id="desktop-table">
     <thead>
       <tr>
         <th>Aliment</th>
         <th>Portion type</th>
-        <th>Calcium / portion</th>
+        <th>Calcium (mg)</th>
+        <th>Vitamine D (µg)</th>
         <th>Petit-déj</th>
         <th>Déjeuner</th>
         <th>Goûter</th>
@@ -61,7 +173,7 @@
     </thead>
     <tbody id="table-body">
       <tr id="meal-summaries-row">
-        <td colspan="3"><strong>Aliments sélectionnés</strong></td>
+        <td colspan="4"><strong>Aliments sélectionnés</strong></td>
         <td id="breakfast-summary" class="meal-summary"><ul></ul></td>
         <td id="lunch-summary" class="meal-summary"><ul></ul></td>
         <td id="snack-summary" class="meal-summary"><ul></ul></td>
@@ -70,16 +182,95 @@
     </tbody>
     <tfoot>
       <tr class="total">
-        <td colspan="3">Total Calcium (mg)</td>
-        <td id="total-breakfast">0</td>
-        <td id="total-lunch">0</td>
-        <td id="total-snack">0</td>
-        <td id="total-dinner">0</td>
+        <td colspan="4">Total Calcium (mg)</td>
+        <td id="total-breakfast-calcium">0</td>
+        <td id="total-lunch-calcium">0</td>
+        <td id="total-snack-calcium">0</td>
+        <td id="total-dinner-calcium">0</td>
+      </tr>
+      <tr class="total vitamin-d-total">
+        <td colspan="4">Total Vitamine D (µg)</td>
+        <td id="total-breakfast-vitaminD">0</td>
+        <td id="total-lunch-vitaminD">0</td>
+        <td id="total-snack-vitaminD">0</td>
+        <td id="total-dinner-vitaminD">0</td>
       </tr>
     </tfoot>
   </table>
+  
+  <!-- Mobile-friendly display (will be shown/hidden with CSS) -->
+  <div id="mobile-view" style="display: none;">
+    <div id="food-navigation">
+      <button id="prev-food">◀ Précédent</button>
+      <span id="current-food-info">1 / 35</span>
+      <button id="next-food">Suivant ▶</button>
+    </div>
+    
+    <div id="current-food-details" class="food-card">
+      <h3 id="mobile-food-name"></h3>
+      <div id="mobile-food-portion"></div>
+      <div class="nutrients">
+        <div class="nutrient">
+          <span class="label">Calcium:</span>
+          <span id="mobile-food-calcium"></span> mg
+        </div>
+        <div class="nutrient">
+          <span class="label">Vitamine D:</span>
+          <span id="mobile-food-vitaminD"></span> µg
+        </div>
+      </div>
+      
+      <div class="meal-inputs">
+        <div class="meal-input">
+          <label for="mobile-breakfast">Petit-déjeuner:</label>
+          <input type="number" id="mobile-breakfast" min="0" value="0">
+        </div>
+        <div class="meal-input">
+          <label for="mobile-lunch">Déjeuner:</label>
+          <input type="number" id="mobile-lunch" min="0" value="0">
+        </div>
+        <div class="meal-input">
+          <label for="mobile-snack">Goûter:</label>
+          <input type="number" id="mobile-snack" min="0" value="0">
+        </div>
+        <div class="meal-input">
+          <label for="mobile-dinner">Dîner:</label>
+          <input type="number" id="mobile-dinner" min="0" value="0">
+        </div>
+      </div>
+    </div>
+    
+    <div class="mobile-totals">
+      <h3>Totaux par repas</h3>
+      <div class="mobile-meal-totals">
+        <div>
+          <h4>Petit-déjeuner</h4>
+          <div>Calcium: <span id="mobile-total-breakfast-calcium">0</span> mg</div>
+          <div>Vitamine D: <span id="mobile-total-breakfast-vitaminD">0</span> µg</div>
+        </div>
+        <div>
+          <h4>Déjeuner</h4>
+          <div>Calcium: <span id="mobile-total-lunch-calcium">0</span> mg</div>
+          <div>Vitamine D: <span id="mobile-total-lunch-vitaminD">0</span> µg</div>
+        </div>
+        <div>
+          <h4>Goûter</h4>
+          <div>Calcium: <span id="mobile-total-snack-calcium">0</span> mg</div>
+          <div>Vitamine D: <span id="mobile-total-snack-vitaminD">0</span> µg</div>
+        </div>
+        <div>
+          <h4>Dîner</h4>
+          <div>Calcium: <span id="mobile-total-dinner-calcium">0</span> mg</div>
+          <div>Vitamine D: <span id="mobile-total-dinner-vitaminD">0</span> µg</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <div class="totaux-journaliers">Total journalier estimé : <span id="total-daily-bottom">0</span> mg</div>
+  <div class="totaux-journaliers">
+    <div>Total Calcium journalier estimé : <span id="total-daily-calcium-bottom">0</span> mg</div>
+    <div>Total Vitamine D journalier estimé : <span id="total-daily-vitaminD-bottom">0</span> µg</div>
+  </div>
   
   <div style="margin: 20px 0; display: flex; gap: 10px;">
     <button onclick="saveData()" style="padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">💾 Sauvegarder mes quantités</button>
@@ -90,14 +281,15 @@
     // Function to export data as CSV
     function exportData() {
       // Create CSV header
-      let csv = 'Aliment,Portion,Calcium par portion,Petit-déjeuner,Déjeuner,Goûter,Dîner\n';
+      let csv = 'Aliment,Portion,Calcium (mg),Vitamine D (µg),Petit-déjeuner,Déjeuner,Goûter,Dîner\n';
       
       // Add each food item to CSV
       foods.forEach((food, i) => {
         let values = [
           food.name,
           food.portion,
-          food.calcium
+          food.calcium,
+          food.vitaminD
         ];
         
         // Add quantities for each meal
@@ -109,6 +301,23 @@
         // Add line to CSV
         csv += values.join(',') + '\n';
       });
+      
+      // Add summary rows
+      csv += '\n';
+      csv += 'Totaux Calcium (mg),,,,';
+      meals.forEach(meal => {
+        csv += document.getElementById(`total-${meal}-calcium`).textContent + ',';
+      });
+      csv += '\n';
+      
+      csv += 'Totaux Vitamine D (µg),,,,';
+      meals.forEach(meal => {
+        csv += document.getElementById(`total-${meal}-vitaminD`).textContent + ',';
+      });
+      csv += '\n';
+      
+      csv += 'TOTAL JOURNALIER,,,,' + document.getElementById('total-daily-calcium').textContent + ' mg Ca / ' + 
+             document.getElementById('total-daily-vitaminD').textContent + ' µg Vit. D\n';
       
       // Create downloadable link
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -126,29 +335,61 @@
   
   <script>
     const foods = [
-      { name: "Yaourt nature", portion: "1 pot (125 g)", calcium: 150 },
-      { name: "Kiri", portion: "1 portion (20 g)", calcium: 130 },
-      { name: "Fromage blanc", portion: "100 g", calcium: 120 },
-      { name: "Amandes", portion: "15 g (petite poignée)", calcium: 100 },
-      { name: "Hepar / Contrex", portion: "250 ml", calcium: 125 },
-      { name: "Sardines sans arêtes", portion: "100 g", calcium: 40 },
-      { name: "Tofu enrichi", portion: "100 g", calcium: 250 },
-      { name: "Chou cuit", portion: "150 g", calcium: 100 },
-      { name: "Brocoli", portion: "150 g", calcium: 100 },
-      { name: "Lait", portion: "250 ml", calcium: 300 },
-      { name: "Œuf", portion: "1 œuf", calcium: 25 },
-      { name: "Graines tournesol/courge", portion: "15 g", calcium: 50 },
-      { name: "Pain complet", portion: "50 g", calcium: 20 },
-      { name: "Myrtilles", portion: "50 g", calcium: 5 },
-      { name: "Pruneaux", portion: "3 unités", calcium: 10 },
-      { name: "Oignons cuits", portion: "100 g", calcium: 10 },
-      { name: "Tomates", portion: "100 g", calcium: 15 },
-      { name: "Poisson blanc", portion: "100 g", calcium: 15 },
-      { name: "Poulet", portion: "100 g", calcium: 15 }
+      // Produits laitiers - bons en calcium, variables en vitamine D
+      { name: "Yaourt nature", portion: "1 pot (125 g)", calcium: 150, vitaminD: 0.1 },
+      { name: "Kiri", portion: "1 portion (20 g)", calcium: 130, vitaminD: 0.3 },
+      { name: "Fromage blanc", portion: "100 g", calcium: 120, vitaminD: 0.1 },
+      { name: "Lait", portion: "250 ml", calcium: 300, vitaminD: 1.5 },
+      { name: "Fromage cheddar", portion: "30 g", calcium: 200, vitaminD: 0.3 },
+      { name: "Fromage emmental", portion: "30 g", calcium: 220, vitaminD: 0.6 },
+      
+      // Poissons gras - excellentes sources de vitamine D
+      { name: "Saumon", portion: "100 g", calcium: 15, vitaminD: 10.0 },
+      { name: "Sardines (avec arêtes)", portion: "100 g", calcium: 380, vitaminD: 4.8 },
+      { name: "Sardines sans arêtes", portion: "100 g", calcium: 40, vitaminD: 4.0 },
+      { name: "Thon", portion: "100 g", calcium: 10, vitaminD: 7.2 },
+      { name: "Maquereau", portion: "100 g", calcium: 15, vitaminD: 8.0 },
+      { name: "Hareng", portion: "100 g", calcium: 60, vitaminD: 22.0 },
+      { name: "Truite", portion: "100 g", calcium: 20, vitaminD: 16.2 },
+      { name: "Poisson blanc", portion: "100 g", calcium: 15, vitaminD: 1.0 },
+      
+      // Champignons - bonnes sources de vitamine D
+      { name: "Champignons portobello exposés au soleil", portion: "100 g", calcium: 5, vitaminD: 10.0 },
+      { name: "Champignons shiitake séchés", portion: "15 g", calcium: 2, vitaminD: 5.0 },
+      
+      // Œufs - modérés en vitamine D
+      { name: "Œuf entier", portion: "1 œuf", calcium: 25, vitaminD: 1.0 },
+      { name: "Jaune d'œuf", portion: "1 jaune", calcium: 20, vitaminD: 0.9 },
+      
+      // Aliments enrichis en vitamine D
+      { name: "Jus d'orange enrichi", portion: "250 ml", calcium: 350, vitaminD: 2.5 },
+      { name: "Céréales enrichies", portion: "30 g", calcium: 150, vitaminD: 2.0 },
+      { name: "Tofu enrichi", portion: "100 g", calcium: 250, vitaminD: 2.0 },
+      { name: "Lait d'amande enrichi", portion: "250 ml", calcium: 300, vitaminD: 2.5 },
+      { name: "Lait de soja enrichi", portion: "250 ml", calcium: 300, vitaminD: 2.5 },
+      
+      // Autres aliments riches en calcium
+      { name: "Amandes", portion: "15 g (petite poignée)", calcium: 100, vitaminD: 0 },
+      { name: "Hepar / Contrex", portion: "250 ml", calcium: 125, vitaminD: 0 },
+      { name: "Chou cuit", portion: "150 g", calcium: 100, vitaminD: 0 },
+      { name: "Brocoli", portion: "150 g", calcium: 100, vitaminD: 0 },
+      { name: "Graines tournesol/courge", portion: "15 g", calcium: 50, vitaminD: 0 },
+      { name: "Pain complet", portion: "50 g", calcium: 20, vitaminD: 0 },
+      { name: "Myrtilles", portion: "50 g", calcium: 5, vitaminD: 0 },
+      { name: "Pruneaux", portion: "3 unités", calcium: 10, vitaminD: 0 },
+      { name: "Oignons cuits", portion: "100 g", calcium: 10, vitaminD: 0 },
+      { name: "Tomates", portion: "100 g", calcium: 15, vitaminD: 0 },
+      { name: "Poulet", portion: "100 g", calcium: 15, vitaminD: 0.2 },
+      
+      // Huiles - bonnes en vitamine D
+      { name: "Huile de foie de morue", portion: "5 ml (1 c. à thé)", calcium: 0, vitaminD: 10.0 },
+      { name: "Foie de bœuf", portion: "100 g", calcium: 5, vitaminD: 1.2 }
     ];
 
     const meals = ["breakfast", "lunch", "snack", "dinner"];
 
+    let currentFoodIndex = 0;
+    
     function updateMealSummary(meal) {
       const summaryElement = document.getElementById(`${meal}-summary`).querySelector('ul');
       summaryElement.innerHTML = ''; // Clear existing items
@@ -161,8 +402,9 @@
         if (quantity > 0) {
           hasItems = true;
           const calciumAmount = quantity * food.calcium;
+          const vitaminDAmount = quantity * food.vitaminD;
           const li = document.createElement('li');
-          li.textContent = `${quantity} × ${food.name} (${calciumAmount} mg)`;
+          li.textContent = `${quantity} × ${food.name} (${calciumAmount}mg Ca, ${vitaminDAmount.toFixed(1)}µg Vit.D)`;
           summaryElement.appendChild(li);
         }
       });
@@ -178,22 +420,40 @@
     }
     
     function updateTotals() {
-      let dailyTotal = 0;
+      let dailyCalciumTotal = 0;
+      let dailyVitaminDTotal = 0;
+      
       meals.forEach(meal => {
-        let total = 0;
+        let calciumTotal = 0;
+        let vitaminDTotal = 0;
+        
         foods.forEach((_, i) => {
           const input = document.getElementById(`${meal}-${i}`);
           const val = parseFloat(input.value) || 0;
-          total += val * foods[i].calcium;
+          calciumTotal += val * foods[i].calcium;
+          vitaminDTotal += val * foods[i].vitaminD;
         });
-        document.getElementById(`total-${meal}`).textContent = total;
-        dailyTotal += total;
+        
+        document.getElementById(`total-${meal}-calcium`).textContent = calciumTotal;
+        document.getElementById(`total-${meal}-vitaminD`).textContent = vitaminDTotal.toFixed(1);
+        
+        // Update mobile totals
+        const mobileCalciumElement = document.getElementById(`mobile-total-${meal}-calcium`);
+        const mobileVitaminDElement = document.getElementById(`mobile-total-${meal}-vitaminD`);
+        if (mobileCalciumElement) mobileCalciumElement.textContent = calciumTotal;
+        if (mobileVitaminDElement) mobileVitaminDElement.textContent = vitaminDTotal.toFixed(1);
+        
+        dailyCalciumTotal += calciumTotal;
+        dailyVitaminDTotal += vitaminDTotal;
         
         // Update the meal summary
         updateMealSummary(meal);
       });
-      document.getElementById("total-daily").textContent = dailyTotal;
-      document.getElementById("total-daily-bottom").textContent = dailyTotal;
+      
+      document.getElementById("total-daily-calcium").textContent = dailyCalciumTotal;
+      document.getElementById("total-daily-vitaminD").textContent = dailyVitaminDTotal.toFixed(1);
+      document.getElementById("total-daily-calcium-bottom").textContent = dailyCalciumTotal;
+      document.getElementById("total-daily-vitaminD-bottom").textContent = dailyVitaminDTotal.toFixed(1);
     }
 
     function saveData() {
@@ -201,13 +461,19 @@
       meals.forEach(meal => {
         data[meal] = foods.map((_, i) => parseFloat(document.getElementById(`${meal}-${i}`).value) || 0);
       });
-      localStorage.setItem("calciumIntake", JSON.stringify(data));
+      localStorage.setItem("calciumVitaminDIntake", JSON.stringify(data));
       alert("Quantités sauvegardées dans le navigateur.");
     }
 
     function loadData() {
-      const data = JSON.parse(localStorage.getItem("calciumIntake"));
+      let data = JSON.parse(localStorage.getItem("calciumVitaminDIntake"));
+      // Try legacy format for backwards compatibility
+      if (!data) {
+        data = JSON.parse(localStorage.getItem("calciumIntake"));
+      }
+      
       if (!data) return;
+      
       meals.forEach(meal => {
         foods.forEach((_, i) => {
           const input = document.getElementById(`${meal}-${i}`);
@@ -217,9 +483,53 @@
         });
       });
       updateTotals();
+      updateMobileView();
+    }
+    
+    // Mobile view functions
+    function updateMobileView() {
+      const food = foods[currentFoodIndex];
+      document.getElementById('mobile-food-name').textContent = food.name;
+      document.getElementById('mobile-food-portion').textContent = food.portion;
+      document.getElementById('mobile-food-calcium').textContent = food.calcium;
+      document.getElementById('mobile-food-vitaminD').textContent = food.vitaminD;
+      
+      // Update quantity inputs
+      meals.forEach(meal => {
+        const desktopInput = document.getElementById(`${meal}-${currentFoodIndex}`);
+        const mobileInput = document.getElementById(`mobile-${meal}`);
+        if (desktopInput && mobileInput) {
+          mobileInput.value = desktopInput.value;
+        }
+      });
+      
+      // Update navigation info
+      document.getElementById('current-food-info').textContent = `${currentFoodIndex + 1} / ${foods.length}`;
+    }
+    
+    function syncMobileToDesktop() {
+      meals.forEach(meal => {
+        const mobileInput = document.getElementById(`mobile-${meal}`);
+        const desktopInput = document.getElementById(`${meal}-${currentFoodIndex}`);
+        if (mobileInput && desktopInput) {
+          desktopInput.value = mobileInput.value;
+        }
+      });
+      updateTotals();
+    }
+    
+    function navigateFood(direction) {
+      // Save current mobile values to desktop
+      syncMobileToDesktop();
+      
+      currentFoodIndex += direction;
+      if (currentFoodIndex < 0) currentFoodIndex = foods.length - 1;
+      if (currentFoodIndex >= foods.length) currentFoodIndex = 0;
+      
+      updateMobileView();
     }
 
-    // Create food rows
+    // Create food rows for desktop table
     const tbody = document.getElementById("table-body");
     const mealSummaryRow = document.getElementById("meal-summaries-row");
     
@@ -229,14 +539,28 @@
         <td>${food.name}</td>
         <td>${food.portion}</td>
         <td>${food.calcium} mg</td>
+        <td>${food.vitaminD} µg</td>
         ${meals.map(meal => `<td><input type="number" id="${meal}-${i}" min="0" value="0" onchange="updateTotals()"></td>`).join("")}
       `;
       tbody.appendChild(tr);
     });
 
+    // Setup mobile navigation
+    document.getElementById('prev-food').addEventListener('click', () => navigateFood(-1));
+    document.getElementById('next-food').addEventListener('click', () => navigateFood(1));
+    
+    // Setup mobile input event listeners
+    meals.forEach(meal => {
+      const mobileInput = document.getElementById(`mobile-${meal}`);
+      if (mobileInput) {
+        mobileInput.addEventListener('input', syncMobileToDesktop);
+      }
+    });
+
     // Initialize page
     window.onload = function() {
       loadData();
+      updateMobileView();
       // Initialize meal summaries
       meals.forEach(meal => updateMealSummary(meal));
     };
