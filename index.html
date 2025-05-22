@@ -25,7 +25,122 @@
       font-weight: bold;
       display: flex;
       flex-direction: column;
+      gap: 10px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #dee2e6;
+    }
+    
+    .nutrient-total {
+      display: flex;
+      flex-direction: column;
       gap: 5px;
+      padding: 10px;
+      border-radius: 6px;
+      background-color: white;
+      border: 1px solid #e9ecef;
+    }
+    
+    .recommendation {
+      font-size: 0.9em;
+      color: #6c757d;
+      font-weight: normal;
+    }
+    
+    .percentage {
+      font-size: 1.1em;
+      font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    
+    .percentage.low {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+    
+    .percentage.adequate {
+      background-color: #e8f5e8;
+      color: #2e7d32;
+    }
+    
+    .percentage.high {
+      background-color: #fff3e0;
+      color: #ef6c00;
+    }
+    
+    /* Recommendations info section */
+    .recommendations-info {
+      background-color: #e3f2fd;
+      border: 1px solid #90caf9;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    
+    .recommendations-info h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #1565c0;
+    }
+    
+    .recommendations-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .rec-item {
+      background-color: white;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #bbdefb;
+    }
+    
+    .rec-item small {
+      display: block;
+      color: #666;
+      margin-top: 5px;
+      font-style: italic;
+    }
+    
+    .color-legend {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      font-size: 0.9em;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .color-box {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+    
+    .color-box.low {
+      background-color: #ffebee;
+      border: 1px solid #c62828;
+    }
+    
+    .color-box.adequate {
+      background-color: #e8f5e8;
+      border: 1px solid #2e7d32;
+    }
+    
+    .color-box.high {
+      background-color: #fff3e0;
+      border: 1px solid #ef6c00;
     }
     
     /* Meal summary styles */
@@ -151,16 +266,46 @@
       .meal-summary { font-size: 0.8em; }
       body { padding: 10px; }
       h1 { font-size: 1.5em; }
+      .recommendations-grid { grid-template-columns: 1fr; }
+      .color-legend { flex-direction: column; gap: 10px; }
+      .nutrient-total { font-size: 0.95em; }
     }
   </style>
 </head>
 <body>
   <h1>Calculateur d'apport en calcium et vitamine D</h1>
   <p>Sélectionnez les quantités de chaque aliment consommé à chaque repas.</p>
+  
+  <div class="recommendations-info">
+    <h3>ℹ️ Recommandations journalières (adultes 19-70 ans)</h3>
+    <div class="recommendations-grid">
+      <div class="rec-item">
+        <strong>Calcium :</strong> 1000 mg/jour
+        <small>Essentiel pour os et dents</small>
+      </div>
+      <div class="rec-item">
+        <strong>Vitamine D :</strong> 15 µg/jour
+        <small>Favorise l'absorption du calcium</small>
+      </div>
+    </div>
+    <div class="color-legend">
+      <span class="legend-item"><span class="color-box low"></span>Insuffisant (&lt;80%)</span>
+      <span class="legend-item"><span class="color-box adequate"></span>Adéquat (80-120%)</span>
+      <span class="legend-item"><span class="color-box high"></span>Élevé (&gt;120%)</span>
+    </div>
+  </div>
 
   <div class="totaux-journaliers">
-    <div>Total Calcium journalier estimé : <span id="total-daily-calcium">0</span> mg</div>
-    <div>Total Vitamine D journalier estimé : <span id="total-daily-vitaminD">0</span> µg</div>
+    <div class="nutrient-total">
+      <span>Total Calcium journalier : <span id="total-daily-calcium">0</span> mg</span>
+      <span class="recommendation">/ <span id="calcium-recommendation">1000</span> mg recommandés</span>
+      <span class="percentage" id="calcium-percentage">(0%)</span>
+    </div>
+    <div class="nutrient-total">
+      <span>Total Vitamine D journalier : <span id="total-daily-vitaminD">0</span> µg</span>
+      <span class="recommendation">/ <span id="vitaminD-recommendation">15</span> µg recommandés</span>
+      <span class="percentage" id="vitaminD-percentage">(0%)</span>
+    </div>
   </div>
 
   <table id="desktop-table">
@@ -273,8 +418,16 @@
   </div>
 
   <div class="totaux-journaliers">
-    <div>Total Calcium journalier estimé : <span id="total-daily-calcium-bottom">0</span> mg</div>
-    <div>Total Vitamine D journalier estimé : <span id="total-daily-vitaminD-bottom">0</span> µg</div>
+    <div class="nutrient-total">
+      <span>Total Calcium journalier : <span id="total-daily-calcium-bottom">0</span> mg</span>
+      <span class="recommendation">/ 1000 mg recommandés</span>
+      <span class="percentage" id="calcium-percentage-bottom">(0%)</span>
+    </div>
+    <div class="nutrient-total">
+      <span>Total Vitamine D journalier : <span id="total-daily-vitaminD-bottom">0</span> µg</span>
+      <span class="recommendation">/ 15 µg recommandés</span>
+      <span class="percentage" id="vitaminD-percentage-bottom">(0%)</span>
+    </div>
   </div>
   
   <div style="margin: 20px 0; display: flex; gap: 10px;">
@@ -392,8 +545,34 @@
     ];
 
     const meals = ["breakfast", "lunch", "snack", "dinner"];
+    
+    // Recommandations journalières (adultes moyens)
+    const RECOMMENDATIONS = {
+      calcium: 1000, // mg - adultes 19-50 ans
+      vitaminD: 15   // µg - adultes 19-70 ans
+    };
 
     let currentFoodIndex = 0;
+    
+    function updatePercentageDisplay(elementId, value, recommendation) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+      
+      const percentage = Math.round((value / recommendation) * 100);
+      element.textContent = `(${percentage}%)`;
+      
+      // Remove existing classes
+      element.classList.remove('low', 'adequate', 'high');
+      
+      // Add appropriate class based on percentage
+      if (percentage < 80) {
+        element.classList.add('low');
+      } else if (percentage >= 80 && percentage <= 120) {
+        element.classList.add('adequate');
+      } else {
+        element.classList.add('high');
+      }
+    }
     
     function updateMealSummary(meal) {
       const summaryElement = document.getElementById(`${meal}-summary`).querySelector('ul');
@@ -459,6 +638,12 @@
       document.getElementById("total-daily-vitaminD").textContent = dailyVitaminDTotal.toFixed(1);
       document.getElementById("total-daily-calcium-bottom").textContent = dailyCalciumTotal;
       document.getElementById("total-daily-vitaminD-bottom").textContent = dailyVitaminDTotal.toFixed(1);
+      
+      // Update percentage displays
+      updatePercentageDisplay('calcium-percentage', dailyCalciumTotal, RECOMMENDATIONS.calcium);
+      updatePercentageDisplay('vitaminD-percentage', dailyVitaminDTotal, RECOMMENDATIONS.vitaminD);
+      updatePercentageDisplay('calcium-percentage-bottom', dailyCalciumTotal, RECOMMENDATIONS.calcium);
+      updatePercentageDisplay('vitaminD-percentage-bottom', dailyVitaminDTotal, RECOMMENDATIONS.vitaminD);
     }
 
     function saveData() {
