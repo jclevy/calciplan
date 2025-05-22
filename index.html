@@ -51,6 +51,11 @@
       display: none;
     }
     
+    /* Desktop view styles */
+    #desktop-table {
+      display: table;
+    }
+    
     #food-navigation {
       display: flex;
       justify-content: space-between;
@@ -140,8 +145,8 @@
     
     /* Responsive styles */
     @media (max-width: 768px) {
-      #desktop-table { display: none; }
-      #mobile-view { display: block; }
+      #desktop-table { display: none !important; }
+      #mobile-view { display: block !important; }
       input[type=number] { width: 100%; }
       .meal-summary { font-size: 0.8em; }
       body { padding: 10px; }
@@ -199,7 +204,7 @@
   </table>
   
   <!-- Mobile-friendly display (will be shown/hidden with CSS) -->
-  <div id="mobile-view" style="display: none;">
+  <div id="mobile-view">
     <div id="food-navigation">
       <button id="prev-food">◀ Précédent</button>
       <span id="current-food-info">1 / 35</span>
@@ -488,6 +493,11 @@
     
     // Mobile view functions
     function updateMobileView() {
+      if (!document.getElementById('mobile-food-name')) {
+        console.warn('Mobile view elements not found');
+        return;
+      }
+      
       const food = foods[currentFoodIndex];
       document.getElementById('mobile-food-name').textContent = food.name;
       document.getElementById('mobile-food-portion').textContent = food.portion;
@@ -504,7 +514,10 @@
       });
       
       // Update navigation info
-      document.getElementById('current-food-info').textContent = `${currentFoodIndex + 1} / ${foods.length}`;
+      const navInfo = document.getElementById('current-food-info');
+      if (navInfo) {
+        navInfo.textContent = `${currentFoodIndex + 1} / ${foods.length}`;
+      }
     }
     
     function syncMobileToDesktop() {
@@ -545,20 +558,22 @@
       tbody.appendChild(tr);
     });
 
-    // Setup mobile navigation
-    document.getElementById('prev-food').addEventListener('click', () => navigateFood(-1));
-    document.getElementById('next-food').addEventListener('click', () => navigateFood(1));
-    
-    // Setup mobile input event listeners
-    meals.forEach(meal => {
-      const mobileInput = document.getElementById(`mobile-${meal}`);
-      if (mobileInput) {
-        mobileInput.addEventListener('input', syncMobileToDesktop);
-      }
-    });
-
     // Initialize page
     window.onload = function() {
+      // Setup mobile navigation
+      const prevButton = document.getElementById('prev-food');
+      const nextButton = document.getElementById('next-food');
+      if (prevButton) prevButton.addEventListener('click', () => navigateFood(-1));
+      if (nextButton) nextButton.addEventListener('click', () => navigateFood(1));
+      
+      // Setup mobile input event listeners
+      meals.forEach(meal => {
+        const mobileInput = document.getElementById(`mobile-${meal}`);
+        if (mobileInput) {
+          mobileInput.addEventListener('input', syncMobileToDesktop);
+        }
+      });
+      
       loadData();
       updateMobileView();
       // Initialize meal summaries
